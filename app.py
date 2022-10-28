@@ -27,6 +27,17 @@ if "slider4" not in st.session_state:
 if "slider5" not in st.session_state:
     st.session_state.slider5=0
 
+if "slider6" not in st.session_state:
+    st.session_state.slider6=0
+if "slider7" not in st.session_state:
+    st.session_state.slider7=0
+if "slider8" not in st.session_state:
+    st.session_state.slider8=0
+if "slider9" not in st.session_state:
+    st.session_state.slider9=0
+if "slider10" not in st.session_state:
+    st.session_state.slider10=0
+
 
 # Initialization of Session State attributes (time,uploaded_signal)
 if 'time' not in st.session_state:
@@ -117,7 +128,7 @@ with fourier_signal_graph:
 
 
 # sliders columns
-slider_1, slider_2, slider_3, slider_4, slider_5 ,check_boxes = st.columns([2, 2, 2, 2, 2, 2])
+slider_1, slider_2, slider_3, slider_4, slider_5, slider_6, slider_7, slider_8, slider_9, slider_10 ,check_boxes = st.columns([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
 
 with slider_1 :
     s1= svs.vertical_slider(key="slider1", default_value=50, step=1, min_value=0, 
@@ -151,6 +162,43 @@ with slider_4 :
 
 with slider_5 :
     s5= svs.vertical_slider( key="slider5", default_value=10, step=1, min_value=0, 
+                    max_value=100,   slider_color= 'red',#optional
+                    track_color='green', #optional
+                    thumb_color = 'blue' #optional
+                    )
+
+with slider_6 :
+    s1= svs.vertical_slider(key="slider6", default_value=50, step=1, min_value=0, 
+                    max_value=100,   slider_color= 'green',#optional
+                    track_color='lightgray', #optional
+                    thumb_color = 'red' #optional
+                    )
+
+with slider_7 :
+    s2= svs.vertical_slider(key="slider7", default_value=10, step=1, min_value=0, 
+                    max_value=100,   slider_color= 'red',#optional
+                    track_color='lightgray', #optional
+                    thumb_color = 'green' #optional
+                    )
+
+with slider_8 :
+    s3= svs.vertical_slider( key="slider8", default_value=10, step=1, min_value=0, 
+                    max_value=100,   slider_color= 'red',#optional
+                    track_color='green', #optional
+                    thumb_color = 'blue' #optional
+                    )
+                    # key=key, 
+
+with slider_9 :
+    s4= svs.vertical_slider( key="slider9", default_value=10, step=1, min_value=0, 
+                    max_value=100,   slider_color= 'red',#optional
+                    track_color='green', #optional
+                    thumb_color = 'blue' #optional
+                    )
+
+
+with slider_10 :
+    s5= svs.vertical_slider( key="slider10", default_value=10, step=1, min_value=0, 
                     max_value=100,   slider_color= 'red',#optional
                     track_color='green', #optional
                     thumb_color = 'blue' #optional
