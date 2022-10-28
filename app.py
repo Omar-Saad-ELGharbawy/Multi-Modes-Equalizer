@@ -3,6 +3,8 @@ import  streamlit_vertical_slider  as svs
 
 import numpy as np
 import pandas as pd
+
+import scipy.io.wavfile as wavfile
 from scipy import fftpack
 
 import plotly.graph_objects as go
@@ -29,8 +31,10 @@ if "slider5" not in st.session_state:
 # Initialization of Session State attributes (time,uploaded_signal)
 if 'time' not in st.session_state:
     st.session_state.time =np.linspace(0,5,2000)
-if 'uploaded_signal' not in st.session_state:
-    st.session_state.uploaded_signal = np.sin(2*np.pi*st.session_state.time)
+if 'signal' not in st.session_state:
+    st.session_state.signal = np.sin(2*np.pi*st.session_state.time)
+if 's_rate' not in st.session_state:
+    st.session_state.s_rate = np.sin(2*np.pi*st.session_state.time)
 
 
 file=st.file_uploader(label="Upload Signal File", key="uploaded_file",type=["csv","wav"])
@@ -38,8 +42,10 @@ file=st.file_uploader(label="Upload Signal File", key="uploaded_file",type=["csv
 if file:
     if file.name.split(".")[-1]=="wav":
         signal, time=read_wav(file)
-        st.session_state.uploaded_signal=signal
+        s_rate, signal1 = wavfile.read(file) 
+        st.session_state.signal=signal
         st.session_state.time= time
+        st.session_state.s_rate= s_rate
     elif file.name.split(".")[-1]=="csv":
         try:
             signal, time, fmax=read_csv(file)
@@ -59,7 +65,7 @@ with time_signal_graph:
     time=np.linspace(0,5,2000)
     full_signals=np.zeros(time.shape)
     if file:
-        full_signals, time= st.session_state.uploaded_signal, st.session_state.time
+        full_signals, time= st.session_state.signal, st.session_state.time
     else:
         time= np.linspace(0, 4, 2000)
 
@@ -97,10 +103,13 @@ with time_signal_graph:
 #column to draw fourier graph
 with fourier_signal_graph:
     
+    FFT = abs(fftpack.fft(st.session_state.signal))
+    freqs = fftpack.fftfreq(len(FFT), (1.0/st.session_state.s_rate))   
+
     fig = go.Figure()
     # y=fftpack.fft(full_signals)
-    fig.add_trace(go.Scatter(x=time,
-                                y=full_signals,
+    fig.add_trace(go.Scatter(x=freqs[range(len(FFT)//2)],
+                                y=FFT[range(len(FFT)//2)],
                                 mode='lines',
                                 name='fourier'))
     fig.update_yaxes(automargin=True)
