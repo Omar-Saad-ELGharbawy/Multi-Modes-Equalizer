@@ -1,20 +1,29 @@
 import streamlit as st
 import  streamlit_vertical_slider  as svs
 
+
 import numpy as np
 import pandas as pd
 
-import scipy.io.wavfile as wavfile
-from scipy import fftpack
+from scipy.io import wavfile
+from scipy.fft import rfft, rfftfreq
+from scipy.fft import irfft
 
 import plotly.graph_objects as go
 
-from utils import read_csv, read_wav
+# from utils import read_csv, read_wav
 
 st.set_page_config(
     page_title="Equalizer",
     layout="wide")
 
+
+
+if "yf_array" not in st.session_state :
+    st.session_state.yf_array=0
+if "xf_array" not in st.session_state :
+    st.session_state.xf_array=0
+# np.linspace(0,10,2000)
 
 if "slider1" not in st.session_state:
     st.session_state.slider1=0
@@ -39,35 +48,62 @@ if "slider10" not in st.session_state:
     st.session_state.slider10=0
 
 
+#
+if "target_idx_1" not in st.session_state :
+    st.session_state.target_idx_1=0
+if "target_idx_2" not in st.session_state :
+    st.session_state.target_idx_2=0
+if "target_idx_3" not in st.session_state :
+    st.session_state.target_idx_3=0
+
+
 # Initialization of Session State attributes (time,uploaded_signal)
 if 'time' not in st.session_state:
-    st.session_state.time =np.linspace(0,5,2000)
+    st.session_state.time =np.linspace(0,10,2000)
 if 'signal' not in st.session_state:
     st.session_state.signal = np.sin(2*np.pi*st.session_state.time)
-if 's_rate' not in st.session_state:
-    st.session_state.s_rate = np.sin(2*np.pi*st.session_state.time)
+if 'sample_rate' not in st.session_state:
+    st.session_state.sample_rate = 1
 
 
 file=st.file_uploader(label="Upload Signal File", key="uploaded_file",type=["csv","wav"])
+browseButton_style = f"""
+<style>
+    .css-1plt86z .css-186ux35{{
+    display: none !important;
+}}
+
+.css-1plt86z{{
+    cursor: pointer !important;
+    user-select: none;
+}}
+
+.css-u8hs99{{
+    flex-direction: column !important;
+    text-align: center;
+    margin-right: AUTO;
+    margin-left: auto;
+}}
+
+.css-1m59kx1{{
+    margin-right: 0rem !important;
+}}
+</style>
+"""  
+st.markdown(browseButton_style, unsafe_allow_html=True)
 ## Add css design
 if file:
     if file.name.split(".")[-1]=="wav":
-        signal, time=read_wav(file)
-        s_rate, signal1 = wavfile.read(file) 
+        # signal, time=read_wav(file)
+        sample_rate, signal = wavfile.read(file) 
+        length = signal.shape[0] / sample_rate
+        time = np.linspace(0., length, signal.shape[0])
         st.session_state.signal=signal
         st.session_state.time= time
-        st.session_state.s_rate= s_rate
-    elif file.name.split(".")[-1]=="csv":
-        try:
-            signal, time, fmax=read_csv(file)
-            st.session_state.uploaded_signal=signal
-            st.session_state.time= time
-            st.session_state.uploaded_fmax= fmax
-        except:
-            st.error("Import a file with X as time and Y as amplitude")
+        st.session_state.sample_rate= sample_rate
 
 #upload and view signal
-time_signal_graph, fourier_signal_graph = st.columns([ 3, 3])
+time_signal_graph, fourier_signal_graph  = st.columns([ 3, 3 ])
 
 
 #column to draw time graph
@@ -82,8 +118,8 @@ with time_signal_graph:
 
     fig = go.Figure()
     
-    fig.add_trace(go.Scatter(x=time,
-                                y=full_signals,
+    fig.add_trace(go.Scatter(x=time[:1000],
+                                y=full_signals[:1000],
                                 mode='lines',
                                 name='Signal'))
     
@@ -114,13 +150,44 @@ with time_signal_graph:
 #column to draw fourier graph
 with fourier_signal_graph:
     
-    FFT = abs(fftpack.fft(st.session_state.signal))
-    freqs = fftpack.fftfreq(len(FFT), (1.0/st.session_state.s_rate))   
+    # FFT = abs(fftpack.fft(st.session_state.signal))
+    # freqs = fftpack.fftfreq(len(FFT), (1.0/st.session_state.s_rate))   
+
+    #fourier transform
+    N = st.session_state.sample_rate * int(st.session_state.time[-1])
+    # st.write(N)
+    # st.write(type(N))
+    # Note the extra 'r' at the front
+    yf = rfft(st.session_state.signal)
+    xf = rfftfreq(N, 1 / st.session_state.sample_rate)
+
+    st.session_state.yf_array=yf
+    st.session_state.xf_array=xf
+
+    # st.write(st.session_state.xf_array)
+
+    #Filtering the Signal
+    # The maximum frequency is half the sample rate
+    points_per_freq = len(xf) / (st.session_state.sample_rate / 2)
+    # Our target frequency is 2000 Hz
+    st.session_state.target_idx_1 = int(points_per_freq * 400)
+    # Our target frequency is 600 Hz
+    st.session_state.target_idx_2 = int(points_per_freq * 600)
+    # Our target frequency is 400 Hz
+    st.session_state.target_idx_3 = int(points_per_freq * 2000)
+
+    # fig = go.Figure()
+    # # y=fftpack.fft(full_signals)
+    # fig.add_trace(go.Scatter(x=xf,
+    #                             y=np.abs(yf),
+    #                             mode='lines',
+    #                             name='fourier'))
+    # fig.update_yaxes(automargin=True)
+    # st.plotly_chart(fig,use_container_width=True)
 
     fig = go.Figure()
-    # y=fftpack.fft(full_signals)
-    fig.add_trace(go.Scatter(x=freqs[range(len(FFT)//2)],
-                                y=FFT[range(len(FFT)//2)],
+    fig.add_trace(go.Scatter(x=st.session_state.xf_array,
+                                y=np.abs(st.session_state.yf_array),
                                 mode='lines',
                                 name='fourier'))
     fig.update_yaxes(automargin=True)
@@ -131,26 +198,33 @@ with fourier_signal_graph:
 slider_1, slider_2, slider_3, slider_4, slider_5, slider_6, slider_7, slider_8, slider_9, slider_10 ,check_boxes = st.columns([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
 
 with slider_1 :
-    s1= svs.vertical_slider(key="slider1", default_value=50, step=1, min_value=0, 
-                    max_value=100,   slider_color= 'green',#optional
+    s1= svs.vertical_slider(key="slider1", default_value=0, step=1, min_value=0, 
+                    max_value=220500,   slider_color= 'green',#optional
                     track_color='lightgray', #optional
                     thumb_color = 'red' #optional
                     )
+    # yf[target_idx_3]=120490j
+    st.session_state.yf_array[st.session_state.target_idx_1]=st.session_state.slider1*-1j
+    st.write(st.session_state.yf_array[st.session_state.target_idx_1])
 
 with slider_2 :
-    s2= svs.vertical_slider(key="slider2", default_value=10, step=1, min_value=0, 
-                    max_value=100,   slider_color= 'red',#optional
+    s2= svs.vertical_slider(key="slider2", default_value=0, step=1, min_value=0, 
+                    max_value=220500,   slider_color= 'red',#optional
                     track_color='lightgray', #optional
                     thumb_color = 'green' #optional
                     )
+    st.session_state.yf_array[st.session_state.target_idx_2]=s2*-1j
+    st.write(st.session_state.yf_array[st.session_state.target_idx_2])
 
 with slider_3 :
-    s3= svs.vertical_slider( key="slider3", default_value=10, step=1, min_value=0, 
-                    max_value=100,   slider_color= 'red',#optional
+    s3= svs.vertical_slider( key="slider3", default_value=0  , step=1, min_value=0, 
+                    max_value=220500,   slider_color= 'red',#optional
                     track_color='green', #optional
                     thumb_color = 'blue' #optional
                     )
-                    # key=key, 
+    st.session_state.yf_array[st.session_state.target_idx_3]=s3*-1j
+    st.write(st.session_state.yf_array[st.session_state.target_idx_3])
+
 
 with slider_4 :
     s4= svs.vertical_slider( key="slider4", default_value=10, step=1, min_value=0, 
@@ -158,7 +232,6 @@ with slider_4 :
                     track_color='green', #optional
                     thumb_color = 'blue' #optional
                     )
-
 
 with slider_5 :
     s5= svs.vertical_slider( key="slider5", default_value=10, step=1, min_value=0, 
@@ -187,7 +260,6 @@ with slider_8 :
                     track_color='green', #optional
                     thumb_color = 'blue' #optional
                     )
-                    # key=key, 
 
 with slider_9 :
     s4= svs.vertical_slider( key="slider9", default_value=10, step=1, min_value=0, 
@@ -195,7 +267,6 @@ with slider_9 :
                     track_color='green', #optional
                     thumb_color = 'blue' #optional
                     )
-
 
 with slider_10 :
     s5= svs.vertical_slider( key="slider10", default_value=10, step=1, min_value=0, 
@@ -208,9 +279,25 @@ with check_boxes:
     frequency = st.checkbox('frequency', value= True)  
     instruments = st.checkbox('instruments',value=False) 
 
+new_fourier_signal_graph, new_time_signal_graph  = st.columns([ 3, 3 ])
 
-# st.write(s1)
-# st.write(s2)
-# st.write(s3)
+with new_fourier_signal_graph:
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=st.session_state.xf_array,
+                                y=np.abs(st.session_state.yf_array),
+                                mode='lines',
+                                name='fourier'))
+    fig.update_yaxes(automargin=True)
+    st.plotly_chart(fig,use_container_width=True)
 
-# st.write(st.session_state.sx)
+
+with new_time_signal_graph :
+    new_sig = irfft(st.session_state.yf_array)
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=time[:1000],
+                                y=new_sig[:1000],
+                                mode='lines',
+                                name='fourier'))
+    fig.update_yaxes(automargin=True)
+    st.plotly_chart(fig,use_container_width=True)
