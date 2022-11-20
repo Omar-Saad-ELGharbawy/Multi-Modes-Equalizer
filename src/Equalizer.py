@@ -19,7 +19,7 @@ hide_streamlit_style = """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 # -------------------------------------Open css file---------------------------------------------------------#
-with open('style.css') as sc:
+with open('src\style.css') as sc:
     st.markdown(f"<style>{sc.read()}</style>",unsafe_allow_html=True)
 
 #----------------------------------------Dynamic Session States--------------------------------#
@@ -91,7 +91,7 @@ if option in ["Frequency", "Vowels", "Music", "Animal Changer"] :
         # ----------------------------------------------------Calculate INVERSE Fourier Transform----------------------------------------# 
         fourier_signal = np.multiply(st.session_state.amplitude, np.exp(1j*phase))
         updated_signal = irfft(fourier_signal)
-        write("new_piano.wav", sample_rate, updated_signal)
+        write("new_audio.wav", sample_rate, updated_signal)
 #-------------------------------------------------------------Voice Changer Mode----------------------------------------------#
 elif option == "Voice Changer": 
     #----------------------------------Radio buttons to select sounnd tone---------------------------#
@@ -104,34 +104,13 @@ elif option == "Voice Changer":
         shift = 5
     if upload_file_flag :
         updated_signal = voice_changer( original_signal, sample_rate,shift)
-        write("voice_changed.wav", sample_rate, updated_signal)
-
-# if 'graph_mode' not in st.session_state:
-#     st.session_state.graph_mode="default"
-
-# {"default","start",,"resume","pause"}
+        write("new_voice.wav", sample_rate, updated_signal)
 
 #-------------------------------------------------Draw Dynamic Time Graph-----------------------------------#
 with time_graphs_container:
-
-    # myKey = 'my_key'
-    # if myKey not in st.session_state:
-    #     st.session_state[myKey] = False
-
-    # if st.session_state[myKey]:
-    #     resume_button = st.button('Resume')
-    #     resume = True
-    #     st.session_state[myKey] = False
-    # else:
-    #     resume_button = st.button('Pause')
-    #     resume = False
-        # st.session_state[myKey] = True
-
     resume= st.button('Play/Pause')
-    # if resume :
-    #     resume.text = "Clicked"
-    
     plotShow(original_signal[:len(updated_signal)],updated_signal,resume,sample_rate )
+
 # Check if spectogram checkbox is presssed Draw Spectrogram
 if spectogram_checkbox:
     #-------------------------------- Spectrogram of orignal signal---------------------------------------------------------------#
@@ -159,7 +138,6 @@ if upload_file_flag :
     with new_audio_slider:
         #Display changed audio file
         if option != "Voice Changer" :
-            st.audio("new_piano.wav",format='audio/wav')
+            st.audio("new_audio.wav",format='audio/wav')
         elif option == "Voice Changer":
-            st.audio("voice_changed.wav",format='audio/wav')
-
+            st.audio("new_voice.wav",format='audio/wav')
