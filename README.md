@@ -1,4 +1,4 @@
-# DSP_Equalizer_Task_2
+# Multi-Modes-Equalizer || DSP_Equalizer_Task_2
 
 ## Requirments
 pip install streamlit-vertical-slider
